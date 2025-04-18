@@ -23,11 +23,11 @@
             <tr>
                 <td>{{ bus.BusID }}</td>
                 <td>{{ bus.VehicleID }}</td>
-                <td>{{ bus.RouteID }}</td>
+                <td><a href="/buses?RouteID={{ bus.RouteID }}">{{ bus.RouteID }}</a></td>
                 <td>{{ bus.TripStartTime }}</td>
-                <td>{{ bus.TripendTime }}</td>
+                <td>{{ bus.TripEndTime }}</td>
                 <td>{{ bus.DirectionText }}</td>
-                <td>{{ bus.TripHeadsign }}</td>
+                <td><a href="/buses?TripHeadsign={{ bus.TripHeadsign }}">{{ bus.TripHeadsign }}</a></td>
             </tr>
            
             {% endfor %}

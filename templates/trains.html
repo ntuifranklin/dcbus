@@ -20,8 +20,8 @@
                 {% for destination, trains in destinations.items() %}
                     {% for train in trains %}
                         <tr>
-                            <td>{{ train.Line }}</td>
-                            <td>{{ train.DestinationName }}</td>
+                            <td><a href="/trains?Line={{ train.Line }}">{{ train.Line }}</a></td>
+                            <td><a href="/trains?DestinationName={{ train.DestinationName }}">{{ train.DestinationName }}</a></td>
                             <td>{{ train.LocationName }}</td>
                             <td>{{ train.Car if train.Car else 'N/A' }}</td>
                             <td>{{ train.Min }}</td>

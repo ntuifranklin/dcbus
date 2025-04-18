@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request
 import requests
 import json
 from collections import defaultdict
@@ -84,7 +84,23 @@ def buses():
         # Add a unique ID for each bus in the route
         for i, bus in enumerate(buses):
             bus['BusID'] = f"{route_id}_{i}"
-   
+    # check if url is parametrized
+    if 'RouteID' in request.args:
+        route_id = request.args.get('RouteID')
+        if route_id in data:
+            data = {route_id: data[route_id]}
+    elif 'TripHeadsign' in request.args:
+        trip_sign = request.args.get('TripHeadsign')
+        # Filter buses by TripSign
+        filtered_data = {}
+        for route_id, buses in data.items():
+            filtered_buses = [bus for bus in buses if bus.get('TripHeadsign') == trip_sign]
+            if filtered_buses:
+                filtered_data[route_id] = filtered_buses
+        # Check if any buses matched the filter
+        if not filtered_data:
+            return jsonify({"error": "No buses found with the specified TripHeadsign."})
+        data = filtered_data
     return render_template('buses.html', data=data)
 
 
@@ -92,8 +108,26 @@ def buses():
 def trains():
     
     data = load_trains_data()
-   
-   
+    # Filter by Line if provided in the URL parameters
+    if 'Line' in request.args:
+        line = request.args.get('Line')
+        if line in data:
+            data = {line: data[line]}
+        else:
+            return jsonify({"error": "No trains found for the specified Line."})
+    # Filter by Destination if provided in the URL parameters
+    elif 'DestinationName' in request.args:
+        destination = request.args.get('DestinationName')
+        filtered_data = {}
+        for line, destinations in data.items():
+            for dest, trains in destinations.items():
+                if dest == destination:
+                    filtered_data[line] = {dest: trains}
+        # Check if any trains matched the filter
+        if not filtered_data:
+            return jsonify({"error": "No trains found for the specified Destination."})
+        data = filtered_data    
+    
     return render_template('trains.html', data=data)
 
 if __name__ == '__main__':
