@@ -15,6 +15,7 @@
                     <tr>
                         <th scope="col">Bus ID</th>
                         <th scope="col">Vehicle ID</th>
+                        <th scope="col">Latitude and Longitude</th>
                         <th scope="col">Route ID</th>
                         <th scope="col">Departure Time</th>
                         <th scope="col">Arrival Time</th>
@@ -28,6 +29,7 @@
                     <tr>
                         <td>{{ bus.BusID }}</td>
                         <td>{{ bus.VehicleID }}</td>
+                        <td>{{ bus.Lat }}, {{ bus.Lon}}</td>
                         <td>
                             <a href="/buses?RouteID={{ bus.RouteID }}" class="text-primary">
                                 {{ bus.RouteID }}
