@@ -2,6 +2,14 @@ from flask import Flask, render_template, jsonify, request
 import requests
 import json
 from collections import defaultdict
+import pandas as pd
+from datetime import datetime
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.metrics import mean_absolute_error
 
 #bus_base_url="http://api.wmata.com/Bus.svc/json/jBusPositions[?RouteID][&Lat][&Lon][&Radius]"
 # [?RouteID][&Lat][&Lon][&Radius]
@@ -11,6 +19,8 @@ api_key="296133456a6948218953320589a758b0"
 app = Flask(__name__)
 buses_data = None 
 trains_data = None
+model = None
+
 def load_buses_data():
     global buses_data
     if buses_data is None:
@@ -69,6 +79,70 @@ def load_trains_data():
             print("No train data found in the response.")
         
     return trains_data
+
+def generate_training_model():
+    # Step 1: Load the data
+    un_normalized_bus_json = pd.read_json("utils/bus_positions_json_data.json")
+    bus_df = pd.json_normalize(un_normalized_bus_json['BusPositions'])
+        
+    # Step 2: Compute target variable (trip duration in minutes)
+    bus_df['TripStartTime'] = pd.to_datetime(bus_df['TripStartTime'])
+    bus_df['TripEndTime'] = pd.to_datetime(bus_df['TripEndTime'])
+    bus_df['TripDurationMinutes'] = (bus_df['TripEndTime'] - bus_df['TripStartTime']).dt.total_seconds() / 60
+    
+    # Step 3: Select features and target
+    features = ['Lat', 'Lon', 'Deviation', 'DirectionNum', 'RouteID', 'DirectionText', 'TripHeadsign']
+    target = 'TripDurationMinutes'
+    X = bus_df[features]
+    y = bus_df[target]
+
+    # Step 4: Preprocessing
+    categorical_features = ['RouteID', 'DirectionText', 'TripHeadsign']
+    numerical_features = ['Lat', 'Lon', 'Deviation', 'DirectionNum']
+
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ('cat', OneHotEncoder(handle_unknown='ignore'), categorical_features),
+            ('num', 'passthrough', numerical_features)
+        ])
+    
+    # Step 5: Model pipeline
+    model = Pipeline(steps=[
+    ('preprocessor', preprocessor),
+    ('regressor', RandomForestRegressor(random_state=42))
+    ])
+
+        
+    # Step 6: Train/test split and model training
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    model.fit(X_train, y_train)
+
+        
+    # Step 7: Evaluation
+    y_pred = model.predict(X_test)
+    mae = mean_absolute_error(y_test, y_pred)
+    print(f'Mean Absolute Error on test set: {mae:.2f} minutes')
+
+    return model 
+def predict_trip_duration(new_data, model):
+    # Convert new data into a DataFrame
+    new_df = pd.DataFrame([new_data])
+    
+    # Ensure all required columns are present
+    required_columns = ['Lat', 'Lon', 'Deviation', 'DirectionNum', 'RouteID', 'DirectionText', 'TripHeadsign']
+    missing = set(required_columns) - set(new_df.columns)
+    if missing:
+        raise ValueError(f"Missing required columns: {missing}")
+
+    # Predict duration
+    predicted_duration = model.predict(new_df)[0]
+    return round(predicted_duration, 2)
+
+@app.before_request
+def preload_training_model():
+    global model
+    if model is None:
+        model = generate_training_model()
 
 @app.route('/')
 def index():
@@ -129,6 +203,65 @@ def trains():
         data = filtered_data    
     
     return render_template('trains.html', data=data)
+
+@app.route('/buses_trips_predictions', methods=['GET'])
+def bus_predictions():
+    global model
+    # Example new bus data
+    new_bus_data = {
+        "Lat": 38.8951,
+        "Lon": -77.0364,
+        "Deviation": 10.0,
+        "DirectionNum": 1,
+        "RouteID": "32",
+        "DirectionText": "WEST",
+        "TripHeadsign": "POTOMAC PARK"
+    }
+
+    # Predict the trip duration in minutes
+    predicted_minutes = predict_trip_duration(new_bus_data, model)
+    print(f"Predicted Trip Duration: {predicted_minutes} minutes")
+    return render_template('bus_predictions.html', data=predicted_minutes)
+
+@app.route('/buses_trips_predictions', methods=['POST'])
+def bus_predictions_post():
+    global model
+    # Get the new bus data from the request
+    form_data = request.form
+    
+    new_bus_data = {
+        "Lat": form_data.get("Lat", 38.8951),
+        "Lon": form_data.get("Lon", -77.0364),
+        "Deviation": form_data.get("Deviation", 10.0),
+        "DirectionNum": form_data.get("DirectionNum", 1),
+        "RouteID": form_data.get("RouteID", "32"),
+        "DirectionText": form_data.get("DirectionText", "WEST"),
+        "TripHeadsign": form_data.get("TripHeadsign", "POTOMAC PARK")
+    }
+    
+    # Predict the trip duration in minutes
+    predicted_minutes = predict_trip_duration(new_bus_data, model)
+    print(f"Predicted Trip Duration: {predicted_minutes} minutes")
+    
+    return render_template('bus_predictions.html', data=predicted_minutes)
+
+def bus_predictions():
+    global model
+    # Example new bus data
+    new_bus_data = {
+        "Lat": 38.8951,
+        "Lon": -77.0364,
+        "Deviation": 10.0,
+        "DirectionNum": 1,
+        "RouteID": "32",
+        "DirectionText": "WEST",
+        "TripHeadsign": "POTOMAC PARK"
+    }
+
+    # Predict the trip duration in minutes
+    predicted_minutes = predict_trip_duration(new_bus_data, model)
+    print(f"Predicted Trip Duration: {predicted_minutes} minutes")
+    return render_template('bus_predictions.html', data=predicted_minutes)
 
 if __name__ == '__main__':
     app.run(debug=True)
