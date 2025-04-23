@@ -5,12 +5,21 @@
 {% block content %}
 
 <div class="container text-center mt-5">
-    <h1 class="display-4">Welcome to DCTrainBus</h1>
-    <p class="lead">This is a simple Bootstrap-powered welcome page for dc trains and buses.</p>
-    <a href="/buses" class="btn btn-primary btn-lg">Bus Live Schedule</a>
-    <a href="/trains" class="btn btn-primary btn-lg">Train Live Schedule</a>
-    <a href="/buses_trips_predictions" class="btn btn-primary btn-lg">Bus Trips Predictions</a>
-<div class="mt-4">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/WMATA_system_map.svg/2471px-WMATA_system_map.svg.png" class="img-fluid w-50 h-50" alt="WMATA System Map">
+    <h1 class="display-3 fw-bold text-primary">Welcome to DCTrainBus</h1>
+    <p class="lead text-muted">Your one-stop solution for live schedules and predictions for DC trains and buses.</p>
+    
+    <div class="d-flex justify-content-center gap-3 mt-4">
+        <a href="/buses" class="btn btn-outline-primary btn-lg shadow-sm">Live Bus Schedule</a>
+        <a href="/trains" class="btn btn-outline-success btn-lg shadow-sm">Live Train Schedule</a>
+        <a href="/buses_trips_predictions" class="btn btn-outline-warning btn-lg shadow-sm">Bus Trips Predictions</a>
+    </div>
+    
+    <div class="mt-5">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/WMATA_system_map.svg/2471px-WMATA_system_map.svg.png" 
+             class="img-fluid rounded shadow-lg" 
+             style="max-width: 75%; height: auto;" 
+             alt="WMATA System Map">
+    </div>
 </div>
+
 {% endblock %}
