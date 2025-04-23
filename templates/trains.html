@@ -1,36 +1,41 @@
-
 {% extends 'base.html' %}
 {% block title %} Trains {% endblock %}
 
 {% block content %}
 <div class="container mt-5">
-    <h1 class="text-center">Trains</h1>
-    <table class="table table-hover table-bordered table-striped mt-4">
-        <thead class="thead-dark">
-            <tr>
-                <th>Line</th>
-                <th>Destination</th>
-                <th>Location</th>
-                <th>Cars</th>
-                <th>Minutes</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for line, destinations in data.items() %}
-                {% for destination, trains in destinations.items() %}
-                    {% for train in trains %}
-                        <tr>
-                            <td><a href="/trains?Line={{ train.Line }}">{{ train.Line }}</a></td>
-                            <td><a href="/trains?DestinationName={{ train.DestinationName }}">{{ train.DestinationName }}</a></td>
-                            <td>{{ train.LocationName }}</td>
-                            <td>{{ train.Car if train.Car else 'N/A' }}</td>
-                            <td>{{ train.Min }}</td>
-                        </tr>
+    <h1 class="text-center text-primary mb-4">Train Schedule</h1>
+    <div class="card shadow-lg">
+        <div class="card-header bg-dark text-white">
+            <h4 class="mb-0">Train Information</h4>
+        </div>
+        <div class="card-body">
+            <table class="table table-hover table-bordered table-striped">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>Line</th>
+                        <th>Destination</th>
+                        <th>Location</th>
+                        <th>Cars</th>
+                        <th>Minutes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for line, destinations in data.items() %}
+                        {% for destination, trains in destinations.items() %}
+                            {% for train in trains %}
+                                <tr>
+                                    <td><a href="/trains?Line={{ train.Line }}" class="text-decoration-none text-primary">{{ train.Line }}</a></td>
+                                    <td><a href="/trains?DestinationName={{ train.DestinationName }}" class="text-decoration-none text-primary">{{ train.DestinationName }}</a></td>
+                                    <td>{{ train.LocationName }}</td>
+                                    <td>{{ train.Car if train.Car else 'N/A' }}</td>
+                                    <td>{{ train.Min }}</td>
+                                </tr>
+                            {% endfor %}
+                        {% endfor %}
                     {% endfor %}
-                {% endfor %}
-            {% endfor %}
-        </tbody>
-    </table>
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 {% endblock %}
-{{data}}
